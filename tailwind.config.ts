@@ -51,6 +51,14 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        cat: {
+          mental: "hsl(var(--cat-mental))",
+          physical: "hsl(var(--cat-physical))",
+          intelligence: "hsl(var(--cat-intelligence))",
+          skills: "hsl(var(--cat-skills))",
+          habits: "hsl(var(--cat-habits))",
+          communication: "hsl(var(--cat-communication))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

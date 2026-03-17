@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { motion } from "framer-motion";
 import ProgressGauge from "@/components/ProgressGauge";
-import HabitCard from "@/components/HabitCard";
+import CategorySection from "@/components/CategorySection";
 import AddHabitDrawer from "@/components/AddHabitDrawer";
 import WeekView from "@/components/WeekView";
-import { useHabits } from "@/hooks/useHabits";
+import { useHabits, CATEGORIES } from "@/hooks/useHabits";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -24,9 +24,8 @@ function getFormattedDate(): string {
 
 const Index = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { habits, toggleHabit, addHabit, percentage, completedCount } = useHabits();
+  const { habits, habitsByCategory, toggleHabit, addHabit, percentage, completedCount } = useHabits();
 
-  // Mock week data based on current day
   const today = new Date().getDay();
   const weekDays = Array.from({ length: 7 }, (_, i) => i < (today === 0 ? 7 : today));
 
@@ -41,55 +40,60 @@ const Index = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-2xl font-medium tracking-tight text-foreground">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             {getGreeting()}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">{getFormattedDate()}</p>
         </motion.div>
 
-        {/* Progress Summary */}
+        {/* Overall Progress */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
-          className="flex items-center justify-between mb-6"
+          className="flex items-center justify-between mb-8 p-4 rounded-xl bg-card shadow-card"
         >
-          <div className="flex items-baseline gap-2">
-            <span className="text-xs tracking-widest uppercase text-muted-foreground">
-              Progress
-            </span>
-            <span className="font-mono text-sm tabular-nums text-foreground">
-              {completedCount}/{habits.length}
+          <div>
+            <p className="text-xs tracking-widest uppercase text-muted-foreground">Daily Progress</p>
+            <p className="text-2xl font-semibold text-foreground mt-1">
+              {completedCount}
+              <span className="text-muted-foreground text-base font-normal"> / {habits.length}</span>
+            </p>
+          </div>
+          <div className="relative w-16 h-16">
+            <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+              <circle cx="18" cy="18" r="15" fill="none" stroke="hsl(var(--muted))" strokeWidth="3" />
+              <motion.circle
+                cx="18" cy="18" r="15" fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray={`${percentage * 0.9425} 94.25`}
+                initial={{ strokeDasharray: "0 94.25" }}
+                animate={{ strokeDasharray: `${percentage * 0.9425} 94.25` }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center font-mono text-xs tabular-nums text-foreground">
+              {percentage}%
             </span>
           </div>
-          <span className="font-mono text-xs tabular-nums tracking-widest uppercase text-muted-foreground">
-            {percentage}%
-          </span>
         </motion.div>
 
-        {/* Habit List */}
-        <div className="space-y-3">
-          {habits.length === 0 ? (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-sm text-muted-foreground text-center py-12"
-            >
-              No habits defined for {getFormattedDate()}.
-            </motion.p>
-          ) : (
-            habits.map((habit, i) => (
-              <HabitCard
-                key={habit.id}
-                name={habit.name}
-                category={habit.category}
-                streak={habit.streak}
-                completed={habit.completedToday}
-                onToggle={() => toggleHabit(habit.id)}
-                index={i}
+        {/* Category Sections */}
+        <div className="space-y-8">
+          {CATEGORIES.map((cat) => {
+            const items = habitsByCategory[cat.key];
+            if (!items) return null;
+            return (
+              <CategorySection
+                key={cat.key}
+                category={cat.key}
+                habits={items}
+                onToggle={toggleHabit}
               />
-            ))
-          )}
+            );
+          })}
         </div>
 
         {/* Week View */}

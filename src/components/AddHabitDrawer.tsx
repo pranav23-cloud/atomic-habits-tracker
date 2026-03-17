@@ -1,26 +1,27 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
+import { CATEGORIES, type Category } from "@/hooks/useHabits";
 
 interface AddHabitDrawerProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (habit: { name: string; type: "daily" | "weekly"; category: string }) => void;
+  onAdd: (habit: { name: string; type: "daily" | "weekly"; category: Category; goal?: string }) => void;
 }
-
-const categories = ["Health", "Study", "Fitness", "Mindfulness", "Productivity", "Other"];
 
 const AddHabitDrawer = ({ open, onClose, onAdd }: AddHabitDrawerProps) => {
   const [name, setName] = useState("");
   const [type, setType] = useState<"daily" | "weekly">("daily");
-  const [category, setCategory] = useState("Health");
+  const [category, setCategory] = useState<Category>("Mental");
+  const [goal, setGoal] = useState("");
 
   const handleSubmit = () => {
     if (!name.trim()) return;
-    onAdd({ name: name.trim(), type, category });
+    onAdd({ name: name.trim(), type, category, goal: goal.trim() || undefined });
     setName("");
     setType("daily");
-    setCategory("Health");
+    setCategory("Mental");
+    setGoal("");
     onClose();
   };
 
@@ -44,7 +45,7 @@ const AddHabitDrawer = ({ open, onClose, onAdd }: AddHabitDrawerProps) => {
           >
             <div className="p-6 space-y-5">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium tracking-tight text-foreground">New Habit</h2>
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">New Habit</h2>
                 <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
                   <X className="w-5 h-5" />
                 </button>
@@ -62,6 +63,28 @@ const AddHabitDrawer = ({ open, onClose, onAdd }: AddHabitDrawerProps) => {
                     className="w-full bg-muted rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all"
                     autoFocus
                   />
+                </div>
+
+                <div>
+                  <label className="text-xs text-muted-foreground uppercase tracking-widest mb-2 block">
+                    Category
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {CATEGORIES.map((c) => (
+                      <button
+                        key={c.key}
+                        onClick={() => setCategory(c.key)}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-all ${
+                          category === c.key
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <span>{c.emoji}</span>
+                        <span className="truncate">{c.key}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
@@ -87,23 +110,14 @@ const AddHabitDrawer = ({ open, onClose, onAdd }: AddHabitDrawerProps) => {
 
                 <div>
                   <label className="text-xs text-muted-foreground uppercase tracking-widest mb-2 block">
-                    Category
+                    Goal (optional)
                   </label>
-                  <div className="flex flex-wrap gap-2">
-                    {categories.map((c) => (
-                      <button
-                        key={c}
-                        onClick={() => setCategory(c)}
-                        className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
-                          category === c
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div>
+                  <input
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value)}
+                    placeholder="e.g., Finish 24 books this year"
+                    className="w-full bg-muted rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+                  />
                 </div>
               </div>
 

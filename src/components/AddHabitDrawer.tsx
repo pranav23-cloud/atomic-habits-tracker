@@ -2,26 +2,40 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { CATEGORIES, type Category } from "@/hooks/useHabits";
+import { useEffect } from "react";
 
 interface AddHabitDrawerProps {
   open: boolean;
   onClose: () => void;
-  onAdd: (habit: { name: string; type: "daily" | "weekly"; category: Category; goal?: string }) => void;
+  mode?: "create" | "edit";
+  initial?: { name: string; type: "daily" | "weekly"; category: Category; goal?: string };
+  onSubmit: (habit: { name: string; type: "daily" | "weekly"; category: Category; goal?: string }) => void | Promise<void>;
 }
 
-const AddHabitDrawer = ({ open, onClose, onAdd }: AddHabitDrawerProps) => {
+const AddHabitDrawer = ({ open, onClose, onSubmit, mode = "create", initial }: AddHabitDrawerProps) => {
   const [name, setName] = useState("");
   const [type, setType] = useState<"daily" | "weekly">("daily");
   const [category, setCategory] = useState<Category>("Mental");
   const [goal, setGoal] = useState("");
 
-  const handleSubmit = () => {
-    if (!name.trim()) return;
-    onAdd({ name: name.trim(), type, category, goal: goal.trim() || undefined });
+  useEffect(() => {
+    if (!open) return;
+    if (mode === "edit" && initial) {
+      setName(initial.name ?? "");
+      setType(initial.type ?? "daily");
+      setCategory(initial.category ?? "Mental");
+      setGoal(initial.goal ?? "");
+      return;
+    }
     setName("");
     setType("daily");
     setCategory("Mental");
     setGoal("");
+  }, [open, mode, initial]);
+
+  const handleSubmit = () => {
+    if (!name.trim()) return;
+    onSubmit({ name: name.trim(), type, category, goal: goal.trim() || undefined });
     onClose();
   };
 
@@ -45,7 +59,9 @@ const AddHabitDrawer = ({ open, onClose, onAdd }: AddHabitDrawerProps) => {
           >
             <div className="p-6 space-y-5">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold tracking-tight text-foreground">New Habit</h2>
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                  {mode === "edit" ? "Edit Habit" : "New Habit"}
+                </h2>
                 <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
                   <X className="w-5 h-5" />
                 </button>
@@ -126,7 +142,7 @@ const AddHabitDrawer = ({ open, onClose, onAdd }: AddHabitDrawerProps) => {
                 disabled={!name.trim()}
                 className="w-full bg-primary text-primary-foreground py-3 rounded-xl text-sm font-medium transition-all hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                Commit to habit
+                {mode === "edit" ? "Save changes" : "Commit to habit"}
               </button>
             </div>
           </motion.div>

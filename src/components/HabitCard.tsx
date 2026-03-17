@@ -1,24 +1,28 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ChevronDown, Flame } from "lucide-react";
+import { Check, ChevronDown, Flame, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { categoryColor, type Category } from "@/hooks/useHabits";
-import { getRecommendations } from "@/lib/recommendations";
+import { useYouTubeRecommendations } from "@/hooks/useYouTubeRecommendations";
 import VideoCard from "./VideoCard";
 
 interface HabitCardProps {
+  id: string;
   name: string;
   category: Category;
   streak: number;
   completed: boolean;
   goal?: string;
   onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
   index: number;
 }
 
-const HabitCard = ({ name, category, streak, completed, goal, onToggle, index }: HabitCardProps) => {
+const HabitCard = ({ name, category, streak, completed, goal, onToggle, onEdit, onDelete, index }: HabitCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const color = categoryColor[category];
-  const videos = getRecommendations(category);
+  const recs = useYouTubeRecommendations(name, expanded);
+  const accent = `hsl(var(--${color}))`;
 
   return (
     <motion.div
@@ -34,12 +38,12 @@ const HabitCard = ({ name, category, streak, completed, goal, onToggle, index }:
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={onToggle}
-            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+            className="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200"
+            style={
               completed
-                ? `bg-${color} border-${color}`
-                : "border-muted-foreground/30 hover:border-muted-foreground/60"
-            }`}
-            style={completed ? { backgroundColor: `hsl(var(--${color.replace("cat-", "cat-")}))`, borderColor: `hsl(var(--${color.replace("cat-", "cat-")}))` } : undefined}
+                ? { backgroundColor: accent, borderColor: accent }
+                : { borderColor: "hsl(var(--muted-foreground) / 0.35)" }
+            }
           >
             {completed && <Check className="w-3 h-3 text-primary-foreground" />}
           </motion.button>
@@ -63,6 +67,24 @@ const HabitCard = ({ name, category, streak, completed, goal, onToggle, index }:
               <span className="font-mono text-xs tabular-nums text-foreground/70">{streak}</span>
             </div>
           )}
+          <button
+            onClick={onEdit}
+            className="p-1 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+            aria-label="Edit habit"
+            title="Edit"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              if (confirm("Delete this habit?")) onDelete();
+            }}
+            className="p-1 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-destructive"
+            aria-label="Delete habit"
+            title="Delete"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
           <button
             onClick={() => setExpanded(!expanded)}
             className="p-1 rounded-md hover:bg-muted transition-colors"
@@ -88,7 +110,18 @@ const HabitCard = ({ name, category, streak, completed, goal, onToggle, index }:
                 Recommended for you
               </p>
               <div className="space-y-1">
-                {videos.map((v, i) => (
+                {recs.isLoading && (
+                  <div className="text-sm text-muted-foreground py-2">Loading videos…</div>
+                )}
+                {!recs.isLoading && recs.data?.length === 0 && (
+                  <div className="text-sm text-muted-foreground py-2">
+                    No videos yet. Add `VITE_YOUTUBE_API_KEY` to your `.env` to enable recommendations.
+                  </div>
+                )}
+                {recs.isError && (
+                  <div className="text-sm text-destructive py-2">Couldn’t load recommendations.</div>
+                )}
+                {recs.data?.map((v, i) => (
                   <VideoCard key={v.id} video={v} index={i} />
                 ))}
               </div>

@@ -5,7 +5,7 @@ import ProgressGauge from "@/components/ProgressGauge";
 import CategorySection from "@/components/CategorySection";
 import AddHabitDrawer from "@/components/AddHabitDrawer";
 import WeekView from "@/components/WeekView";
-import { useHabits, CATEGORIES } from "@/hooks/useHabits";
+import { useHabits, CATEGORIES, type Habit } from "@/hooks/useHabits";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -24,13 +24,15 @@ function getFormattedDate(): string {
 
 const Index = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { habits, habitsByCategory, toggleHabit, addHabit, percentage, completedCount } = useHabits();
+  const [editing, setEditing] = useState<Habit | null>(null);
+  const { habits, habitsByCategory, toggleHabit, addHabit, updateHabit, deleteHabit, percentage, completedCount, loading } =
+    useHabits();
 
   const today = new Date().getDay();
   const weekDays = Array.from({ length: 7 }, (_, i) => i < (today === 0 ? 7 : today));
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <ProgressGauge percentage={percentage} />
 
       <div className="mx-auto max-w-[640px] px-5 pt-14 pb-28">
@@ -82,6 +84,14 @@ const Index = () => {
 
         {/* Category Sections */}
         <div className="space-y-8">
+          {loading && (
+            <div className="text-sm text-muted-foreground">Loading habits…</div>
+          )}
+          {!loading && habits.length === 0 && (
+            <div className="p-4 rounded-xl bg-card shadow-card text-sm text-muted-foreground">
+              No habits yet. Tap the + button to add your first habit.
+            </div>
+          )}
           {CATEGORIES.map((cat) => {
             const items = habitsByCategory[cat.key];
             if (!items) return null;
@@ -91,6 +101,11 @@ const Index = () => {
                 category={cat.key}
                 habits={items}
                 onToggle={toggleHabit}
+                onEdit={(h) => {
+                  setEditing(h);
+                  setDrawerOpen(true);
+                }}
+                onDelete={(id) => void deleteHabit(id)}
               />
             );
           })}
@@ -124,8 +139,20 @@ const Index = () => {
 
       <AddHabitDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        onAdd={addHabit}
+        onClose={() => {
+          setDrawerOpen(false);
+          setEditing(null);
+        }}
+        mode={editing ? "edit" : "create"}
+        initial={
+          editing
+            ? { name: editing.name, type: editing.type, category: editing.category, goal: editing.goal }
+            : undefined
+        }
+        onSubmit={(data) => {
+          if (editing) return void updateHabit(editing.id, data);
+          return void addHabit(data);
+        }}
       />
     </div>
   );

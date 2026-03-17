@@ -6,10 +6,12 @@ import HabitCard from "./HabitCard";
 interface CategorySectionProps {
   category: Category;
   habits: Habit[];
-  onToggle: (id: string) => void;
+  onToggle: (id: string) => void | Promise<void>;
+  onEdit: (habit: Habit) => void;
+  onDelete: (id: string) => void;
 }
 
-const CategorySection = ({ category, habits, onToggle }: CategorySectionProps) => {
+const CategorySection = ({ category, habits, onToggle, onEdit, onDelete }: CategorySectionProps) => {
   const catMeta = CATEGORIES.find((c) => c.key === category)!;
   const color = categoryColor[category];
   const completed = habits.filter((h) => h.completedToday).length;
@@ -45,12 +47,15 @@ const CategorySection = ({ category, habits, onToggle }: CategorySectionProps) =
         {habits.map((habit, i) => (
           <HabitCard
             key={habit.id}
+            id={habit.id}
             name={habit.name}
             category={habit.category}
             streak={habit.streak}
             completed={habit.completedToday}
             goal={habit.goal}
             onToggle={() => onToggle(habit.id)}
+            onEdit={() => onEdit(habit)}
+            onDelete={() => onDelete(habit.id)}
             index={i}
           />
         ))}
